@@ -1,21 +1,23 @@
 /** @odoo-module */
 
-import { OrderSummary } from "@point_of_sale/app/screens/product_screen/order_summary/order_summary";
 import { patch } from "@web/core/utils/patch";
+import { PosOrderline } from "@point_of_sale/app/models/pos_order_line";
 import { accountTaxHelpers } from "@account/helpers/account_tax";
+import { parseFloat } from "@web/views/fields/parsers";
 
-patch(OrderSummary.prototype, {
-    async setLinePrice(line, price) {
-        if (this.pos.manual_price_tax_included === undefined) {
-            this.pos.manual_price_tax_included = true;
+patch(PosOrderline.prototype, {
+    setUnitPrice(price) {
+        if (this.config.manual_price_tax_included === undefined) {
+            this.config.manual_price_tax_included = true;
         }
 
-        if (this.pos.manual_price_tax_included) {
-            const tax_ids = line.tax_ids;
+        if (this.config.manual_price_tax_included) {
+            const tax_ids = this.tax_ids;
             if (tax_ids && tax_ids.length > 0) {
-                const targetPrice = parseFloat(price);
+                const priceStr = price !== undefined && price !== null ? price.toString() : "0";
+                const targetPrice = parseFloat(priceStr);
                 if (!isNaN(targetPrice)) {
-                    const company = line.company;
+                    const company = this.company;
                     const companyRoundingMethod = company && company.tax_calculation_rounding_method 
                         ? company.tax_calculation_rounding_method 
                         : "round_globally";
@@ -26,8 +28,9 @@ patch(OrderSummary.prototype, {
                         1.0,
                         {
                             rounding_method: companyRoundingMethod,
-                            product: line.product_id,
+                            product: this.product_id,
                             special_mode: "total_included",
+                            precision_rounding: Math.pow(10, -this.currency.decimal_places),
                         }
                     );
                     
@@ -36,6 +39,6 @@ patch(OrderSummary.prototype, {
                 }
             }
         }
-        return super.setLinePrice(line, price);
+        return super.setUnitPrice(price);
     }
 });

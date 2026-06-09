@@ -12,15 +12,44 @@ export class TaxToggleModeButton extends Component {
 
     setup() {
         this.pos = usePos();
-        if (this.pos.manual_price_tax_included === undefined) {
-            this.pos.manual_price_tax_included = true;
+        if (this.pos.config.manual_price_tax_included === undefined) {
+            this.pos.config.manual_price_tax_included = true;
         }
     }
 
     onClick() {
-        this.pos.manual_price_tax_included = !this.pos.manual_price_tax_included;
+        const wasIncluded = this.pos.config.manual_price_tax_included;
+        const order = this.pos.getOrder();
+        let selectedLine = null;
+        let currentTargetPrice = null;
+
+        if (order) {
+            selectedLine = order.getSelectedOrderline();
+            if (selectedLine) {
+                if (wasIncluded) {
+                    currentTargetPrice = selectedLine.unitPrices?.total_included ?? selectedLine.price_unit;
+                } else {
+                    currentTargetPrice = selectedLine.price_unit;
+                }
+            }
+        }
+
+        // Toggle the global state
+        this.pos.config.manual_price_tax_included = !wasIncluded;
+
+        // Re-apply the price to the selected line to recalculate taxes
+        if (selectedLine && currentTargetPrice !== null) {
+            selectedLine.setUnitPrice(currentTargetPrice);
+        }
     }
 }
 
+import { patch } from "@web/core/utils/patch";
+
 // Add the component so it can be used in the ControlButtons template
-Object.assign(ControlButtons.components, { TaxToggleModeButton });
+patch(ControlButtons, {
+    components: {
+        ...ControlButtons.components,
+        TaxToggleModeButton,
+    },
+});

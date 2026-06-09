@@ -4,7 +4,7 @@
     <t t-name="RAK.TaxToggleModeButton">
         <button t-attf-class="{{props.class}} flex-shrink-0" t-on-click="onClick">
             <i class="fa fa-percent me-1" role="img" aria-label="Tax Mode" title="Tax Mode" />
-            <t t-if="pos.manual_price_tax_included">
+            <t t-if="pos.config.manual_price_tax_included">
                 <span>Tax Incl.</span>
             </t>
             <t t-else="">
@@ -16,7 +16,7 @@
     <!-- The template extension -->
     <t t-name="RAK.ControlButtons" t-inherit="point_of_sale.ControlButtons" t-inherit-mode="extension">
         <xpath expr="//InternalNoteButton" position="after">
-            <TaxToggleModeButton t-if="!props.showRemainingButtons || (ui.isSmall and props.showRemainingButtons)" t-att-class="buttonClass" />
+            <TaxToggleModeButton t-if="!props.showRemainingButtons || (ui.isSmall and props.showRemainingButtons)" class="buttonClass" />
         </xpath>
     </t>
 </templates>
